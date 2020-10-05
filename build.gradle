@@ -3,7 +3,7 @@ plugins {
 }
 
 group 'ranzer'
-version '1.16'
+version '1.17'
 
 sourceCompatibility = 1.8
 
@@ -29,7 +29,7 @@ dependencies {
 jar {
     manifest {
         attributes (
-                "Main-Class": "net.ranzer.grimco.rafflebot.GrimcoRaffleBot",
+                "Main-Class": "net.ranzer.ciprania.dicebot.CipraniaDiceBot",
                 "version"   : version
         )
     }
