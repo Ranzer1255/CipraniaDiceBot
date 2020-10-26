@@ -5,6 +5,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.ranzer.ciprania.dicebot.commands.BotCommand;
 import net.ranzer.ciprania.dicebot.commands.admin.*;
 import net.ranzer.ciprania.dicebot.functions.dice.commands.DiceCommand;
+import net.ranzer.ciprania.dicebot.functions.dice.commands.FateDiceCommand;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,7 +30,8 @@ public class CommandListener extends ListenerAdapter {
 //			.addCommand(new AddRoleCommand())
 //			.addCommand(new RemoveRoleCommand())
 //			.addCommand(new ModRoleCommand())
-			.addCommand(new DiceCommand());
+			.addCommand(new DiceCommand())
+			.addCommand(new FateDiceCommand());
 //			.addCommand(new DraconicTranslateCommand())
 //			.addCommand(new RaffleCommand())
 //			.addCommand(new RaffleEnterCommand())
