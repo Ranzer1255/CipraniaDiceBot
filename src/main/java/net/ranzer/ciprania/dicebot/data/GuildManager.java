@@ -1,22 +1,26 @@
 package net.ranzer.ciprania.dicebot.data;
 
-import net.ranzer.ciprania.dicebot.CipraniaDiceBot;
-import net.ranzer.ciprania.dicebot.database.BotDB;
-import net.ranzer.ciprania.dicebot.util.Logging;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.events.channel.text.TextChannelCreateEvent;
 import net.dv8tion.jda.api.events.channel.text.TextChannelDeleteEvent;
-import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
-import net.dv8tion.jda.api.events.guild.member.GuildMemberLeaveEvent;
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.ranzer.ciprania.dicebot.CipraniaDiceBot;
+import net.ranzer.ciprania.dicebot.database.HibernateManager;
+import net.ranzer.ciprania.dicebot.database.interfaces.GuildData;
+import net.ranzer.ciprania.dicebot.database.model.ChannelDataModel;
+import net.ranzer.ciprania.dicebot.database.model.GuildDataModel;
+import net.ranzer.ciprania.dicebot.database.model.MemberDataModel;
+import net.ranzer.ciprania.dicebot.util.Logging;
+import org.hibernate.Session;
+import org.jetbrains.annotations.NotNull;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import java.util.List;
 
 /**
  * container for all the GuildData objects
@@ -26,28 +30,17 @@ import java.sql.SQLException;
  */
 public class GuildManager extends ListenerAdapter{
 
-	//SQL Statements
-
-	private static final String ADD_NEW_GUILDS_SQL =
-			"INSERT INTO cipraniadb.guild" +
-				"(guild_id) " +
-				"VALUES (?) " +
-				"ON CONFLICT DO NOTHING";
-
 	/*
 	 * update the DB to match things that happened while bot was offline
 	 */
 	static{
 		Logging.info("updating DB to things that happened while offline");
 		
-		Logging.info("adding new guilds");
-		addNewGuilds();
-		
 		Logging.info("removing old guilds");
 		removeOldGuilds();
 
 		Logging.info("updating text channels");
-		updateTextChannels();
+		removeOldTextChannels();
 
 		Logging.info("updating members");
 		updateMembers();
@@ -56,190 +49,102 @@ public class GuildManager extends ListenerAdapter{
 		
 	}
 
+	//Black Magic code copied from the internet
+	public static <T> List<T> loadAllData(Class<T> type, Session s){
+		CriteriaBuilder builder = s.getCriteriaBuilder();
+		CriteriaQuery<T> criteria = builder.createQuery(type);
+		criteria.from(type);
+		return s.createQuery(criteria).getResultList();
+	}
+
 	public static IGuildData getGuildData(Guild key){
-		return new GuildDB(key);
+		return new GuildData(key);
 	}
 
 
 	//convenience pass through methods
 	public static String getPrefix(Guild key){
-		return new GuildDB(key).getPrefix();
+		return new GuildData(key).getPrefix();
 	}
 	public static void setPrefix(Guild key, String prefix){
-		new GuildDB(key).setPrefix(prefix);
+		new GuildData(key).setPrefix(prefix);
 	}
 	public static void removePrefix(Guild key){
-		new GuildDB(key).removePrefix();
+		new GuildData(key).removePrefix();
 	}
 
 	//DB update methods
-	private static void addNewGuilds() {
 
-		try {
-			Connection con = BotDB.getConnection();
-			con.setAutoCommit(false);
-			PreparedStatement stmt = con.prepareStatement(
-					ADD_NEW_GUILDS_SQL
-			);
-			for(Guild g: CipraniaDiceBot.getJDA().getGuilds()){
-				stmt.setString(1,g.getId());
-				stmt.addBatch();
-			}
-			stmt.executeBatch();
-			con.commit();
-			con.setAutoCommit(true);
-		} catch (SQLException e) {
-			Logging.error("issue adding new guilds to the DB");
-			Logging.log(e);
-		}
-	}
+	//todo test this
+	private static void removeOldGuilds() {//todo test this
 
-	private static void removeOldGuilds() {
-		try (ResultSet rs = BotDB.getConnection().prepareStatement(
-					"SELECT guild_id FROM cipraniadb.guild" ,ResultSet.TYPE_FORWARD_ONLY,ResultSet.CONCUR_UPDATABLE
-			).executeQuery()){
-
-			while(rs.next()){
-				if(CipraniaDiceBot.getJDA().getGuildById(rs.getString(1))==null)
-					rs.deleteRow();
-			}
-
-		} catch (SQLException e) {
-			Logging.error("problem removing old guilds from DB");
-			Logging.log(e);
-		}
-	}
-
-	private static void updateTextChannels(){
-		//add new text channels
-		try {
-			Connection con = BotDB.getConnection();
-			con.setAutoCommit(false);
-			PreparedStatement stmt = con.prepareStatement(
-					"insert into cipraniadb.text_channel (guild_id, text_channel_id) " +
-							"values (?,?) ON CONFLICT DO NOTHING"
-			);
-			for(Guild g: CipraniaDiceBot.getJDA().getGuilds()){
-				for(TextChannel t: g.getTextChannels()){
-					stmt.setString(1,g.getId());
-					stmt.setString(2,t.getId());
-					stmt.addBatch();
+		try (Session s = HibernateManager.getSessionFactory().openSession()){
+			s.beginTransaction();
+			List<GuildDataModel> guilds = loadAllData(GuildDataModel.class,s);
+			for (GuildDataModel guild:guilds){
+				if(CipraniaDiceBot.getJDA().getGuildById(guild.getId())==null){
+					s.delete(guild);
 				}
 			}
-			stmt.executeBatch();
-			con.commit();
-			con.setAutoCommit(true);
-		} catch (SQLException e) {
-			Logging.error("issue adding channels");
-			Logging.log(e);
-		}
-
-
-		//delete old text channels
-		try (ResultSet rs = BotDB.getConnection().prepareStatement(
-				"select text_channel_id from cipraniadb.text_channel" ,ResultSet.TYPE_FORWARD_ONLY,ResultSet.CONCUR_UPDATABLE
-		).executeQuery()){
-			while(rs.next()){
-				if(CipraniaDiceBot.getJDA().getTextChannelById(rs.getString(1))==null)
-					rs.deleteRow();
-			}
-		} catch (SQLException e) {
-			Logging.error("issue deleting channels");
-			Logging.log(e);
+			s.getTransaction().commit();
 		}
 	}
 
+	//todo test this
+	private static void removeOldTextChannels() {
+		try (Session s = HibernateManager.getSessionFactory().openSession()){
+			s.beginTransaction();
+			List<ChannelDataModel> channels = loadAllData(ChannelDataModel.class,s);
+			for (ChannelDataModel channel:channels){
+				if(CipraniaDiceBot.getJDA().getTextChannelById(channel.getID())==null){
+					s.delete(channel);
+				}
+			}
+			s.getTransaction().commit();
+		}
+	}
+
+	//todo test this
 	private static void updateMembers() {
 
-		//add new members
-		try {
-			Connection con = BotDB.getConnection();
-			con.setAutoCommit(false);
-			PreparedStatement stmt = con.prepareStatement(
-					"insert into cipraniadb.member (guild_id, user_id) " +
-							"values (?,?) ON CONFLICT DO NOTHING"
-			);
-			for(Guild g: CipraniaDiceBot.getJDA().getGuilds()){
-				g.loadMembers(m -> {
-					try {
-						stmt.setString(1,g.getId());
-						stmt.setString(2,m.getUser().getId());
-						stmt.addBatch();
-					} catch (SQLException e) {
-						e.printStackTrace();
-					}
-				});
-			}
-			stmt.executeBatch();
-			con.commit();
-			con.setAutoCommit(true);
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-
-		//old code to delete old members, i'm going to keep it commented out, but likely wont use it
-		//see onGuildMemberLeave() for more details
-
 		//delete old members' XP
-		try (ResultSet rs = BotDB.getConnection().prepareStatement(
-				"select guild_id, user_id, xp from cipraniadb.member" ,ResultSet.TYPE_FORWARD_ONLY,ResultSet.CONCUR_UPDATABLE
-			).executeQuery()){
-			while (rs.next()){
-				if (CipraniaDiceBot.getJDA().getGuildById(rs.getString(1)).getMemberById(rs.getString(2))==null){
-					rs.updateInt(3,0);
+		try (Session s = HibernateManager.getSessionFactory().openSession()) {
+			JDA jda = CipraniaDiceBot.getJDA();
+			s.beginTransaction();
+			List<MemberDataModel> members = loadAllData(MemberDataModel.class, s);
+			for (MemberDataModel member : members) {
+				//noinspection ConstantConditions
+				if (jda.getGuildById(member.getGuildId())
+						.retrieveMemberById(Long.parseLong(member.getUserId()))
+						.complete() == null) {
+					member.removeAllXP();
 				}
 			}
-		} catch (SQLException e) {
-			Logging.error("issue updating members");
-			Logging.log(e);
+			s.getTransaction().commit();
 		}
-
 	}
 
 
 	//data modification listeners
+	//todo test this
 	@Override
-	public void onGuildJoin(GuildJoinEvent event) {// TODO: 12/26/2018 extract addGuild(Guild guild) as its own method
-
-		try(PreparedStatement stmt = BotDB.getConnection().prepareStatement("insert into cipraniadb.guild(guild_id) values (?)")){
-			stmt.setString(1, event.getGuild().getId());
-			stmt.execute();
-		} catch (SQLException e) {
-			Logging.error("issue joining guild to DB");
-			Logging.log(e);
-		}
-
-	}
-
-	@Override
-	public void onGuildLeave(GuildLeaveEvent event) {// TODO: 12/26/2018 extract removeGuild(Guild guild) as its own method
+	public void onGuildLeave(@NotNull GuildLeaveEvent event) {
 		super.onGuildLeave(event);
 
-		try (PreparedStatement stmt = BotDB.getConnection().prepareStatement(
-				"delete from cipraniadb.guild where guild_id = ?"
-		)){
-
-			stmt.setString(1, event.getGuild().getId());
-			Logging.info(String.format("Delteting guild %s(%s",
-					event.getGuild().getName(),
-					event.getGuild().getId())
-			);
-
-			Logging.debug(String.format("%d rows updated", stmt.executeUpdate()));
-
-		} catch (SQLException e){
-			Logging.error("issue removiing guild from DB: " +event.getGuild().getName());
-			Logging.log(e);
+		try (Session s = HibernateManager.getSessionFactory().openSession()){
+			GuildData g = new GuildData(event.getGuild());
+			s.delete(g.getModel());
 		}
 	}
 
+	//todo test this
 	@Override
 	public void onGuildMemberJoin(GuildMemberJoinEvent event) {
 		getGuildData(event.getGuild()).addMember(event.getMember());
 	}
 
 	@Override
-	public void onGuildMemberLeave(GuildMemberLeaveEvent event) {
+	public void onGuildMemberRemove(GuildMemberRemoveEvent event) {
 
 		//remove leaver's xp
 		IMemberData md = getGuildData(event.getGuild()).getMemberData(event.getMember());
@@ -251,6 +156,20 @@ public class GuildManager extends ListenerAdapter{
 //		getGuildData(event.getGuild()).deleteMember(event.getMember());
 
 	}
+
+	//todo see if this is still needed
+//	@Override
+//	public void onGuildJoin(GuildJoinEvent event) {
+//
+//		try(PreparedStatement stmt = BotDB.getConnection().prepareStatement("insert into grimcodb.guild(guild_id) values (?)")){
+//			stmt.setString(1, event.getGuild().getId());
+//			stmt.execute();
+//		} catch (SQLException e) {
+//			Logging.error("issue joining guild to DB");
+//			Logging.log(e);
+//		}
+//
+//	}
 
 	@Override
 	public void onTextChannelDelete(TextChannelDeleteEvent event) {

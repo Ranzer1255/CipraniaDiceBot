@@ -1,10 +1,17 @@
 package net.ranzer.ciprania.dicebot.data;
 
-import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.User;
 
 import java.util.List;
 
 public interface IGuildData {
+
+    long DEFAULT_MESSAGE_TIMEOUT = 60000L;
+    int DEFAULT_XP_LOWBOUND = 15, DEFAULT_XP_HIGHBOUND = 25;
+
     //prefix methods
     String getPrefix();
     void setPrefix(String prefix);
@@ -31,7 +38,7 @@ public interface IGuildData {
      */
     int getXPHighBound();
     /**
-     * sets the boundres for xp earnings set bounderies equal to guarentee a set outcome
+     * sets the boundaries for xp earnings set boundaries equal to guarantee a set outcome
      * @param low the low bound inclusive
      * @param high the high bound inclusive
      */
@@ -41,15 +48,15 @@ public interface IGuildData {
 
     /**
      *
-     * @param m Member to retreve Data on
+     * @param m Member to retrieve Data on
      * @return IMemberData object containing date for specified Member
      */
     IMemberData getMemberData(Member m);
 
     /**
      * this method points to the correct member object defied by this user
-     * @param u user to retreve data on
-     * @return IMemberData object contaiing data for specified Member
+     * @param u user to retrieve data on
+     * @return IMemberData object containing data for specified Member
      */
     IMemberData getMemberData(User u);
 
@@ -61,7 +68,7 @@ public interface IGuildData {
 
     /**
      * removes Member m from the data Structure represented by this IGuildData Object
-     * @param m
+     * @param m member to remove
      */
     void deleteMember(Member m);
     //channel data
