@@ -1,10 +1,17 @@
 plugins {
     id 'java'
+    id 'idea'
     id 'org.ajoberstar.grgit' version '4.1.0'
     id "org.ajoberstar.reckon" version "0.13.0-rc.1"
 }
 
 group 'ranzer'
+
+idea {
+    module {
+        downloadJavadoc = true
+    }
+}
 
 repositories {
     maven {
@@ -12,7 +19,6 @@ repositories {
         url = 'https://ajoberstar.github.io/bintray-backup/'
     }
     mavenCentral()
-    jcenter()
     maven {
         name 'm2-dv8tion'
         url 'https://m2.dv8tion.net/releases'
@@ -20,8 +26,8 @@ repositories {
 }
 
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-    implementation ('net.dv8tion:JDA:4.2.0_179'){
+    testImplementation group: 'junit', name: 'junit', version: '4.12'
+    implementation ('net.dv8tion:JDA:4.3.0_283'){
         exclude module: 'opus-java'
     }
     implementation group: 'org.apache.commons', name: 'commons-lang3',  version: '3.5'
