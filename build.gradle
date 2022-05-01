@@ -43,7 +43,8 @@ reckon{
     stageFromProp('dev', 'final')
 }
 
-jar {
+tasks.named('jar') {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     manifest {
         attributes (
                 "Main-Class": "net.ranzer.ciprania.dicebot.CipraniaDiceBot",
