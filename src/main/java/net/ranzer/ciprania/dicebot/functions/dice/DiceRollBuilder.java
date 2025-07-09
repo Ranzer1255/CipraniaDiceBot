@@ -24,6 +24,6 @@ public class DiceRollBuilder {
 
 		tokens = Lexer.lex(input);
 
-		return new DaggerheartDiceRoll(input,tokens);
+		return new DualityDiceRoll(input,tokens);
 	}
 }

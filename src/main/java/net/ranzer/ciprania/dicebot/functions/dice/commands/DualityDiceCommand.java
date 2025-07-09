@@ -11,7 +11,7 @@ import net.ranzer.ciprania.dicebot.functions.dice.DiceRollBuilder;
 import java.util.Arrays;
 import java.util.List;
 
-public class DaggerHeartDiceCommand extends BotCommand implements Describable {
+public class DualityDiceCommand extends BotCommand implements Describable {
 	@Override
 	protected boolean isApplicableToPM() {
 		return true;
@@ -20,17 +20,16 @@ public class DaggerHeartDiceCommand extends BotCommand implements Describable {
 	@Override
 	protected void process(String[] args, MessageReceivedEvent event) {
 
-		if(args.length>1){
-			if(event.isFromGuild()){
-				invalidUsage(event.getGuild());
-			} else {
-				invalidUsage(null);
-			}
-			return;
+
+		StringBuilder expression = new StringBuilder();
+
+		for (String arg : args) {
+			expression.append(" ").append(arg);
 		}
+
 		DiceRoll roll;
 		if(args.length==0) roll = DiceRollBuilder.newDaggerRoll("0");
-		else roll = DiceRollBuilder.newDaggerRoll(args[0]);
+		else roll = DiceRollBuilder.newDaggerRoll(expression.substring(1));
 
 		event.getChannel().sendMessage(
 				String.format("%s: %s",
@@ -47,12 +46,12 @@ public class DaggerHeartDiceCommand extends BotCommand implements Describable {
 
 	@Override
 	public List<String> getAlias() {
-		return Arrays.asList("dh", "dagger","hope");
+		return Arrays.asList("duality","dd", "dh","rdd","hope");
 	}
 
 	@Override
 	public String getShortDescription() {
-		return "Rolls both Hope and Fear dice of the Dagger Heart system";
+		return "Rolls the Duality dice of the Daggerheart system";
 	}
 
 	@Override
@@ -61,9 +60,14 @@ public class DaggerHeartDiceCommand extends BotCommand implements Describable {
 		       "Shows 2 different D12s one Labeled Hope: 'H' and one Labled Fear: 'F' these are summed with your modifier, " +
 		       "either positive or negative to give you your total With Either Hope, or Fear, Which ever is the higher of the 2 Dice. " +
 		       "Doubles of *any* kind are treated as a Critical Success.\n\n" +
+			   "Include advantage or disadvantage die by adding it as a part of your modifier in standard RPG dice notation, \n\n" +
 		       "Examples:\n" +
 		       "Command: "+getName()+" 5\n"+
-		       "Returns: 2d12+5: (Hope: 5, Fear: 4) + 5 = 14 With Hope!";
+		       "Returns: 2d12 (__**Hope**: 5__, Fear: 4) + 5 = 14 With Hope!\n" +
+			   "Advantage: "+getName()+" 1d6 + 5\n" +
+			   "Returns: 2d12 (Hope: 3, __**Fear**: 11__) + 1d6 (6) + 1 = 21 With Fear...\n" +
+			   "Disadvantage: "+getName()+" -1d6 + 5\n" +
+			   "Returns: 2d12 (Hope: 3, __**Fear**: 11__) + -1d6 (6) + 1 = 9 With Fear...";
 	}
 
 	public String getUsage(Guild g) {
