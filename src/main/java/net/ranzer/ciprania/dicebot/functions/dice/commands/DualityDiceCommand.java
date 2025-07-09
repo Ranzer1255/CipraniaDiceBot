@@ -28,8 +28,8 @@ public class DualityDiceCommand extends BotCommand implements Describable {
 		}
 
 		DiceRoll roll;
-		if(args.length==0) roll = DiceRollBuilder.newDaggerRoll("0");
-		else roll = DiceRollBuilder.newDaggerRoll(expression.substring(1));
+		if(args.length==0) roll = DiceRollBuilder.newDualityRoll();
+		else roll = DiceRollBuilder.newDualityRoll(expression.substring(1));
 
 		event.getChannel().sendMessage(
 				String.format("%s: %s",

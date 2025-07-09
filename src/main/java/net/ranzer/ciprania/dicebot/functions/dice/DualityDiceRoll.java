@@ -24,20 +24,20 @@ public class DualityDiceRoll extends DiceRoll{
 	@Override
 	public String getLongReadout() {
 		StringBuilder rtn = new StringBuilder();
-		rtn.append(breakdown, 0, breakdown.indexOf('('));
 
+		rtn.append("Duality ");
 		String diceBreakout;
 		if(crit){
-			diceBreakout = "(Hope: **%d**, Fear: **%d**)";
+			diceBreakout = "(Hope: **%d** + Fear: **%d**)";
 		} else if (hopeDie>fearDie){ //with Hope
-			diceBreakout = "(__**Hope**: %d__, Fear: %d)";
+			diceBreakout = "(__**Hope**: %d__ + Fear: %d)";
 		} else { //with Fear
-			diceBreakout = "(Hope: %d, __**Fear**: %d__)";
+			diceBreakout = "(Hope: %d + __**Fear**: %d__)";
 		}
 
 		rtn.append(String.format(diceBreakout,hopeDie,fearDie));
 
-		rtn.append(breakdown,breakdown.indexOf(')')+1,breakdown.length()).append(" = ").append(total).append(" ");
+		rtn.append(breakdown,breakdown.indexOf(')')+1,breakdown.length()).append(" = __**").append(total).append("**__ ");
 
 		if(crit){
 			rtn.append("**Critical!!**");

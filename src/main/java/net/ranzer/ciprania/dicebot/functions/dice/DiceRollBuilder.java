@@ -17,10 +17,20 @@ public class DiceRollBuilder {
 		return new SumDiceRoll(input, tokens);
 	}
 
-	public static DiceRoll newDaggerRoll(String modifier) {
+	public static DiceRoll newDualityRoll(String modifier) {
 		ArrayList<Lexer.Token> tokens;
 
 		String input = "2d12+"+modifier;
+
+		tokens = Lexer.lex(input);
+
+		return new DualityDiceRoll(input,tokens);
+	}
+
+	public static DiceRoll newDualityRoll(){
+		ArrayList<Lexer.Token> tokens;
+
+		String input = "2d12";
 
 		tokens = Lexer.lex(input);
 
