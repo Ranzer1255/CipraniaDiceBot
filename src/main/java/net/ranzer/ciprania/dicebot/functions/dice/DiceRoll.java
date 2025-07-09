@@ -33,5 +33,6 @@ public abstract class DiceRoll {
 		Addition expr = new Addition(tokens);
 		breakdown = expr.getDescription();
 		total = expr.getValue();
+		hasRolled=true;
 	}
 }

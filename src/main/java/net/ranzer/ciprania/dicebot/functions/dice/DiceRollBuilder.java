@@ -16,4 +16,14 @@ public class DiceRollBuilder {
 		}
 		return new SumDiceRoll(input, tokens);
 	}
+
+	public static DiceRoll newDaggerRoll(String modifier) {
+		ArrayList<Lexer.Token> tokens;
+
+		String input = "2d12+"+modifier;
+
+		tokens = Lexer.lex(input);
+
+		return new DaggerheartDiceRoll(input,tokens);
+	}
 }

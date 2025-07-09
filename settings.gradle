@@ -1,2 +1,16 @@
+plugins{
+    id "org.ajoberstar.reckon.settings" version "0.19.2"
+}
+
+
 rootProject.name = 'CipraniaDiceBot'
 
+
+
+
+reckon{
+    defaultInferredScope = 'patch'
+    stages 'dev', 'final'
+    scopeCalc = calcScopeFromProp().or(calcScopeFromCommitMessages())
+    stageCalc = calcStageFromProp()
+}
